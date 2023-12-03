@@ -1,6 +1,6 @@
 [package]
 name = "stegano"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 description = " The ultimate steganography swiss knife army CLI tool."
 license = "MIT"
