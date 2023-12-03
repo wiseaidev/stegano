@@ -142,9 +142,6 @@ Use these subcommands to process and manipulate png images. Here are some exampl
    $ stegano decrypt -i input_image_file_name -k 'pass' -f 159028 -o output_image_file_name -s
    Your decoded secret is: "hello"
    ```
-## 🎨 Options
-
-Certainly! Here's a table based on the provided Rust code for the `stegano` CLI:
 
 ## 🎨 Options
 

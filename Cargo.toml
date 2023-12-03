@@ -1,6 +1,6 @@
 [package]
 name = "stegano"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 description = " The ultimate steganography swiss knife army CLI tool."
 license = "MIT"
@@ -9,7 +9,7 @@ repository = "https://github.com/wiseaidev/stegano"
 homepage = "https://github.com/wiseaidev/stegano"
 documentation = "https://docs.rs/stegano/"
 authors = ["Mahmoud Harmouch <oss@wiseai.dev>"]
-categories = ["cryptography", "command-line-tool"]
+categories = ["cryptography", "cli"]
 readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
