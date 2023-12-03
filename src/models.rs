@@ -1,4 +1,4 @@
-use crate::cli::Cli;
+use crate::cli::{DecryptCmd, EncryptCmd, ShowMetaCmd};
 use crate::utils::{u64_to_u8_array, xor_encode_decode};
 use std::fs::File;
 use std::io::{copy, Error, ErrorKind, Read, Seek, SeekFrom, Write};
@@ -102,7 +102,7 @@ impl MetaChunk {
     /// # Arguments
     ///
     /// - `file` - A mutable reference to a File representing the PNG image file.
-    /// - `c`: A reference to `Cli` containing command-line arguments.
+    /// - `suppress`: A boolean to suppress print statements.
     ///
     /// # Returns
     ///
@@ -112,14 +112,13 @@ impl MetaChunk {
     /// # Panics
     ///
     /// Panics if the file is not a valid PNG format.
-    pub fn pre_process_image(file: &mut File, c: &Cli) -> Result<MetaChunk, Error> {
+    pub fn new(file: &mut File, suppress: bool) -> Result<MetaChunk, Error> {
         let mut header = Header { header: 0 };
         file.read_exact(unsafe { mem::transmute::<_, &mut [u8; 8]>(&mut header.header) })?;
-
         let b_arr = u64_to_u8_array(header.header);
         if &b_arr[1..4] != b"PNG" {
             panic!("Not a valid PNG format");
-        } else if !c.suppress {
+        } else if !suppress {
             println!("It is a valid PNG file. Let's process it!");
         }
 
@@ -144,8 +143,8 @@ impl MetaChunk {
     /// # Arguments
     ///
     /// - `file` - A mutable reference to a File representing the PNG image file.
-    /// - `c`: A reference to `Cli` containing command-line arguments.
-    pub fn process_image(&mut self, file: &mut File, c: &Cli) {
+    /// - `c`: A reference to `ShowMetaCmd` containing command-line arguments.
+    pub fn process_image(&mut self, file: &mut File, c: &ShowMetaCmd) {
         let mut _chunk_type = String::new();
         let end_chunk_type = "IEND";
         for (i, j) in (c.start_chunk..c.end_chunk).enumerate() {
@@ -337,51 +336,76 @@ impl MetaChunk {
         bytes_msb
     }
 
-    /// Writes data to a specified writer, either encoding or decoding based on the provided command arguments.
+    /// Writes data to a specified writer by encryption.
     ///
-    /// This function takes a readable and seekable input, command arguments, and a writable output. It performs common encoding
-    /// and decoding processes based on the provided `Cli`. If encoding is requested, it encodes the data using specific operations,
-    /// and if decoding is requested, it performs decoding operations. The function uses the provided writer to output the processed data.
+    /// This function takes a readable and seekable input, command arguments, and a writable output. It performs encryption
+    /// processes based on the provided `EncryptCmd`. It encrypt the data using specific operations. The function uses the
+    /// provided writer to output the processed data.
     ///
     /// # Arguments
     ///
     /// - `self`: A mutable reference to the instance of the struct containing this method.
     /// - `r`: A mutable reference to a readable and seekable input implementing `Read` and `Seek` traits.
-    /// - `c`: A reference to `Cli` containing command-line arguments that determine the encoding or decoding process.
+    /// - `c`: A reference to `EncryptCmd` containing command-line arguments that determine  the encryption options.
     /// - `w`: A generic writable output implementing the `Write` trait.
-    pub fn write_data<R: Read + Seek, W: Write>(&mut self, r: &mut R, c: &Cli, mut w: W) {
-        // Common encoding and decoding process
+    pub fn write_encrypted_data<R: Read + Seek, W: Write>(
+        &mut self,
+        r: &mut R,
+        c: &EncryptCmd,
+        mut w: W,
+    ) {
         let b_arr = u64_to_u8_array(self.header.header);
         w.write_all(&b_arr).unwrap();
         let offset = &c.offset;
         let mut buff = vec![0; offset - 8];
 
-        if c.encode {
-            // Encoding specific operations
-            buff.resize(offset - 8, 0);
-            r.read_exact(&mut buff).unwrap();
-            w.write_all(&buff).unwrap();
-            let data: Vec<u8> = self.marshal_data();
-            w.write_all(&data).unwrap();
-            // Uncomment the following line to preserve the length of the image after manipulation
-            // r.seek(SeekFrom::Current(data.len().try_into().unwrap())).expect("Error seeking to offset");
-            copy(r, &mut w).unwrap();
-        } else if c.decode {
-            // Decoding specific operations
-            buff.resize(offset - 16, 0);
-            r.read_exact(&mut buff).unwrap();
-            w.write_all(&buff).unwrap();
-            let _offset = self.get_offset(r);
-            self.read_chunk(r);
-            let decoded_data = xor_encode_decode(&self.chk.data, &c.key);
-            let decoded_string = String::from_utf8_lossy(&decoded_data);
-            println!(
-                "\x1b[38;5;7mYour decoded secret is:\x1b[0m \x1b[38;5;214m{:?}\x1b[0m",
-                decoded_string
-            );
-            r.seek(SeekFrom::Current(self.chk.data.len().try_into().unwrap()))
-                .expect("Error seeking to offset");
-            copy(r, &mut w).unwrap();
-        }
+        // Encoding specific operations
+        buff.resize(offset - 8, 0);
+        r.read_exact(&mut buff).unwrap();
+        w.write_all(&buff).unwrap();
+        let data: Vec<u8> = self.marshal_data();
+        w.write_all(&data).unwrap();
+        // Uncomment the following line to preserve the length of the image after manipulation
+        // r.seek(SeekFrom::Current(data.len().try_into().unwrap())).expect("Error seeking to offset");
+        copy(r, &mut w).unwrap();
+    }
+
+    /// Writes data to a specified writer by decryption.
+    ///
+    /// This function takes a readable and seekable input, command arguments, and a writable output. It performs decryption
+    /// processes based on the provided `DecryptCmd`. It decrypt the data using specific operations. The function uses the
+    /// provided writer to output the processed data.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: A mutable reference to the instance of the struct containing this method.
+    /// - `r`: A mutable reference to a readable and seekable input implementing `Read` and `Seek` traits.
+    /// - `c`: A reference to `DecryptCmd` containing command-line arguments that determine the decryption options.
+    /// - `w`: A generic writable output implementing the `Write` trait.
+    pub fn write_decrypted_data<R: Read + Seek, W: Write>(
+        &mut self,
+        r: &mut R,
+        c: &DecryptCmd,
+        mut w: W,
+    ) {
+        let b_arr = u64_to_u8_array(self.header.header);
+        w.write_all(&b_arr).unwrap();
+        let offset = &c.offset;
+        let mut buff = vec![0; offset - 8];
+
+        buff.resize(offset - 16, 0);
+        r.read_exact(&mut buff).unwrap();
+        w.write_all(&buff).unwrap();
+        let _offset = self.get_offset(r);
+        self.read_chunk(r);
+        let decoded_data = xor_encode_decode(&self.chk.data, &c.key);
+        let decoded_string = String::from_utf8_lossy(&decoded_data);
+        println!(
+            "\x1b[38;5;7mYour decoded secret is:\x1b[0m \x1b[38;5;214m{:?}\x1b[0m",
+            decoded_string
+        );
+        r.seek(SeekFrom::Current(self.chk.data.len().try_into().unwrap()))
+            .expect("Error seeking to offset");
+        copy(r, &mut w).unwrap();
     }
 }

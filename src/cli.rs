@@ -1,5 +1,5 @@
 use clap::builder::styling::{AnsiColor, Effects, Styles};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 fn styles() -> Styles {
     Styles::styled()
@@ -16,20 +16,98 @@ fn styles() -> Styles {
     version,
     about = "\x1b[38;5;214mThe ultimate steganography swiss knife army tool.\x1b[0m",
     name = "stegano",
+    propagate_version = true,
     styles = styles()
 )]
 pub struct Cli {
-    /// Sets the image input file.
+    /// Subcommands for encryption and decryption.
+    #[command(subcommand)]
+    pub command: Option<SteganoCommands>,
+}
+
+/// Represents available subcommands for the stegano CLI.
+#[derive(Subcommand, Debug)]
+pub enum SteganoCommands {
+    /// Subcommand for encryption.
+    Encrypt(EncryptCmd),
+
+    /// Subcommand for decryption.
+    Decrypt(DecryptCmd),
+
+    /// Subcommand for showing metadata.
+    ShowMeta(ShowMetaCmd),
+}
+
+/// Subcommand for encryption.
+#[derive(Parser, Debug)]
+pub struct EncryptCmd {
+    /// Sets the input file for injecting the payload.
     #[arg(short = 'i', long = "input")]
     pub input: String,
 
-    /// Sets the output file.
+    /// Sets the output file for generating a new file with the injected payload.
     #[arg(short = 'o', long = "output", default_value_t = String::from("output.png"))]
     pub output: String,
 
-    /// Enables metadata extraction.
-    #[arg(short = 'm', long = "meta", default_value_t = false)]
-    pub meta: bool,
+    /// Sets the key for payload encryption.
+    #[arg(short = 'k', long = "key", default_value_t = String::from("key"))]
+    pub key: String,
+
+    /// Suppresses output messages.
+    #[arg(short = 's', long = "suppress", default_value_t = false)]
+    pub suppress: bool,
+
+    /// Sets the offset.
+    #[arg(short = 'f', long = "offset", default_value_t = 10)]
+    pub offset: usize,
+
+    /// Sets the payload.
+    #[arg(short = 'p', long = "payload", default_value_t = String::from("hello"))]
+    pub payload: String,
+
+    /// Sets the type.
+    #[arg(short = 't', long = "type", default_value_t = String::from("PNG"))]
+    pub r#type: String,
+}
+
+/// Subcommand for decryption.
+#[derive(Parser, Debug)]
+pub struct DecryptCmd {
+    /// Sets the input file for decrypting and extracting the payload.
+    #[arg(short = 'i', long = "input")]
+    pub input: String,
+
+    /// Sets the output file for generating a new file with no payload, aka restoring the original file.
+    #[arg(short = 'o', long = "output", default_value_t = String::from("output.png"))]
+    pub output: String,
+
+    /// Sets the key for payload encryption.
+    #[arg(short = 'k', long = "key", default_value_t = String::from("key"))]
+    pub key: String,
+
+    /// Suppresses output messages.
+    #[arg(short = 's', long = "suppress", default_value_t = false)]
+    pub suppress: bool,
+
+    /// Sets the offset.
+    #[arg(short = 'f', long = "offset", default_value_t = 10)]
+    pub offset: usize,
+
+    /// Sets the payload.
+    #[arg(short = 'p', long = "payload", default_value_t = String::from("hello"))]
+    pub payload: String,
+
+    /// Sets the type.
+    #[arg(short = 't', long = "type", default_value_t = String::from("PNG"))]
+    pub r#type: String,
+}
+
+/// Subcommand for showing metadata.
+#[derive(Parser, Debug)]
+pub struct ShowMetaCmd {
+    /// Sets the image input file.
+    #[arg(short = 'i', long = "input")]
+    pub input: String,
 
     /// Read number of chunks.
     #[arg(short = 'n', long = "nb-chunks", default_value_t = 10)]
@@ -46,32 +124,4 @@ pub struct Cli {
     /// Suppresses output messages.
     #[arg(short = 's', long = "suppress", default_value_t = false)]
     pub suppress: bool,
-
-    /// Sets the offset.
-    #[arg(short = 'f', long = "offset", default_value_t = 10)]
-    pub offset: usize,
-
-    /// Enables injection.
-    #[arg(short = 'j', long = "inject", default_value_t = false)]
-    pub inject: bool,
-
-    /// Sets the payload.
-    #[arg(short = 'p', long = "payload", default_value_t = String::from("hello"))]
-    pub payload: String,
-
-    /// Sets the type.
-    #[arg(short = 't', long = "type", default_value_t = String::from("PNG"))]
-    pub r#type: String,
-
-    /// Enables encoding.
-    #[arg(short = 'e', long = "encode", default_value_t = false)]
-    pub encode: bool,
-
-    /// Enables decoding.
-    #[arg(short = 'd', long = "decode", default_value_t = false)]
-    pub decode: bool,
-
-    /// Sets the key for payload encryption.
-    #[arg(short = 'k', long = "key", default_value_t = String::from("key"))]
-    pub key: String,
 }
