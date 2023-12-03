@@ -25,12 +25,32 @@ cargo install --locked stegano
 
 ## 🛠️ Usage
 
-Use the `stegano` command to process and manipulate png images. Here are some examples:
+`stegano` provides three subcommands:
+
+```bash
+$ stegano -h
+
+The ultimate steganography swiss knife army tool.
+
+Usage: stegano [COMMAND]
+
+Commands:
+  encrypt    Subcommand for encryption
+  decrypt    Subcommand for decryption
+  show-meta  Subcommand for showing metadata
+  help       Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
+Use these subcommands to process and manipulate png images. Here are some examples:
 
 1. Read and process 10 chunks from the image: 
 
    ```bash
-   $ stegano -i image_file_name -m
+   $ stegano show-meta -i image_file_name
    It is a valid PNG file. Let's process it!
    ---- Chunk #1 ----
    Chunk offset: 13
@@ -77,22 +97,22 @@ Use the `stegano` command to process and manipulate png images. Here are some ex
 1. Process the image in silent mode: 
 
    ```bash
-   $ stegano -i image_file_name -m
+   $ stegano show-meta -i image_file_name -s
    ```
 
 1. Read chunks at different positions: 
 
    ```bash
    # Read 1 chunk starting from position 0
-   $ stegano -i image_file_name -c 0 -u 10 -n 1 -m
+   $ stegano show-meta -i image_file_name -c 0 -u 10 -n 1
    It is a valid PNG file. Let's process it!
-   ---- Chunk #10000 ----
+   ---- Chunk #0 ----
    Chunk offset: 13
    Chunk size: 0
    Chunk crc: 3d008
 
    # Read 3 chunks starting from position 10000
-   $ stegano -i image_file_name -c 10000 -u 200000 -n 3 -m
+   $ stegano show-meta -i image_file_name -c 10000 -u 200000 -n 3
    It is a valid PNG file. Let's process it!
    ---- Chunk #10000 ----
    Chunk offset: 13
@@ -108,39 +128,52 @@ Use the `stegano` command to process and manipulate png images. Here are some ex
    Chunk crc: 333db36f
    ```
 
-1. Encode an inject data in an image: 
+1. Encrypt an inject data in an image: 
 
    ```bash
-   # Encode and inject a payload in a new output image from a given input iamge. 
-   $ stegano -i input_image_file_name -e -k 'pass' -p 'hello' -f 159028 -j -o output_image_file_name
+   $ stegano encrypt -i input_image_file_name -k 'pass' -p 'hello' -f 159028 -o output_image_file_name -s
    It is a valid PNG file. Let's process it!
    Image encoded and written successfully!
    ```
 
-1. Decode, extract secrets from an image and remove the secret from the image: 
+1. Decrypt, extract secrets from an image and remove the secret from the image: 
 
    ```bash
-   $ stegano -i input_image_file_name -d -k 'pass' -j -f 159028 -o output_image_file_name -s
+   $ stegano decrypt -i input_image_file_name -k 'pass' -f 159028 -o output_image_file_name -s
    Your decoded secret is: "hello"
    ```
 ## 🎨 Options
 
+Certainly! Here's a table based on the provided Rust code for the `stegano` CLI:
+
+## 🎨 Options
+
 | Option                  | Description                                               |
 |-------------------------|-----------------------------------------------------------|
-| `-i` or `--input`       | Sets the input image file.                                 |
-| `-o` or `--output`      | Sets the output file (default is "output.png").            |
-| `-m` or `--meta`        | Enables metadata extraction.                               |
+| **Encryption Options**  |                                                           |
+| `-i` or `--input`       | Sets the input file for encryption.                        |
+| `-o` or `--output`      | Sets the output file for the encrypted payload (default is "output.png").|
+| `-k` or `--key`         | Sets the key for payload encryption (default is "key").    |
+| `-s` or `--suppress`    | Suppresses output messages.                                |
+| `-f` or `--offset`      | Sets the offset (default is 10).                           |
+| `-p` or `--payload`     | Sets the payload (default is "hello").                     |
+| `-t` or `--type`        | Sets the type (default is "PNG").                          |
+|                         |                                                           |
+| **Decryption Options**  |                                                           |
+| `-i` or `--input`       | Sets the input file for decryption.                        |
+| `-o` or `--output`      | Sets the output file for the decrypted payload (default is "output.png").|
+| `-k` or `--key`         | Sets the key for payload decryption (default is "key").    |
+| `-s` or `--suppress`    | Suppresses output messages.                                |
+| `-f` or `--offset`      | Sets the offset (default is 10).                           |
+| `-p` or `--payload`     | Sets the payload (default is "hello").                     |
+| `-t` or `--type`        | Sets the type (default is "PNG").                          |
+|                         |                                                           |
+| **Metadata Options**    |                                                           |
+| `-i` or `--input`       | Sets the input image file for metadata extraction.         |
 | `-n` or `--nb-chunks`   | Read a specific number of chunks (default is 10).          |
 | `-c` or `--start`       | Sets the index of the start chunk to read from (default 1). |
 | `-u` or `--end`         | Sets the index of the end chunk to stop reading at (default 11).|
 | `-s` or `--suppress`    | Suppresses output messages.                                |
-| `-f` or `--offset`      | Sets the offset (default is 10).                           |
-| `-j` or `--inject`      | Enables injection.                                        |
-| `-p` or `--payload`     | Sets the payload (default is "hello").                     |
-| `-t` or `--type`        | Sets the type (default is "PNG").                          |
-| `-e` or `--encode`      | Enables encoding.                                         |
-| `-d` or `--decode`      | Enables decoding.                                         |
-| `-k` or `--key`         | Sets the key for payload encryption (default is "key").    |
 
 ## 🤝 Contributing
 

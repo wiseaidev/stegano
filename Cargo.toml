@@ -16,7 +16,7 @@ readme = "README.md"
 
 [dependencies]
 clap = { version = "4.4.10", features = ["derive"] }
-crc32-v2 = "0.0.3"
+crc32-v2 = "0.0.4"
 
 [profile.release]
 codegen-units = 1
