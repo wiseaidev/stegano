@@ -62,10 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(());
             }
         },
-        None => println!(
-            "\x1b[1;91m{}\x1b[0m",
-            "Unknown command. Use 'help' for usage instructions."
-        ),
+        None => println!("\x1b[1;91mUnknown command. Use 'help' for usage instructions.\x1b[0m"),
     }
     Ok(())
 }
