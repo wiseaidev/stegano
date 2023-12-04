@@ -3,6 +3,7 @@ use crc32_v2::byfour::crc32_little;
 use std::fs::File;
 use std::io::Write;
 use stegano::cli::{Cli, SteganoCommands};
+use stegano::jpeg::utils::read_jpeg_headers;
 use stegano::models::MetaChunk;
 use stegano::utils::xor_encode_decode;
 
@@ -54,18 +55,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 meta_chunk.write_decrypted_data(&mut file_reader, &decrypt_cmd, &mut file_writer);
             }
             SteganoCommands::ShowMeta(show_meta_cmd) => {
-                let mut file = File::open(show_meta_cmd.input.clone())?;
-
-                let mut meta_chunk = MetaChunk::new(&mut file, show_meta_cmd.suppress)
-                    .expect("Error processing the png file!");
-                meta_chunk.process_image(&mut file, &show_meta_cmd);
+                if show_meta_cmd.r#type.to_lowercase() == "jpeg" {
+                    let _ = read_jpeg_headers(
+                        &show_meta_cmd.input.clone(),
+                        show_meta_cmd.start_chunk,
+                        show_meta_cmd.end_chunk,
+                        show_meta_cmd.nb_chunks,
+                    );
+                } else if show_meta_cmd.r#type.to_lowercase() == "png" {
+                    let mut file = File::open(show_meta_cmd.input.clone())?;
+                    let mut meta_chunk = MetaChunk::new(&mut file, show_meta_cmd.suppress)
+                        .expect("Error processing the png file!");
+                    meta_chunk.process_image(&mut file, &show_meta_cmd);
+                }
                 return Ok(());
             }
         },
-        None => println!(
-            "\x1b[1;91m{}\x1b[0m",
-            "Unknown command. Use 'help' for usage instructions."
-        ),
+        None => println!("\x1b[1;91mUnknown command. Use 'help' for usage instructions.\x1b[0m"),
     }
     Ok(())
 }

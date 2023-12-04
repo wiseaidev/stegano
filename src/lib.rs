@@ -152,5 +152,6 @@
 //! Your contributions help improve this crate for the community.
 
 pub mod cli;
+pub mod jpeg;
 pub mod models;
 pub mod utils;
