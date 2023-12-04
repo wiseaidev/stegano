@@ -7,4 +7,5 @@ pub mod huff;
 pub mod obj;
 pub mod sof;
 pub mod sos;
+pub mod utils;
 pub mod writer;
