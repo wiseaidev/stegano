@@ -8,7 +8,7 @@ use crate::jpeg::writer::JpegWriter;
 /// `JpegObj` representing various properties such as precision, image dimensions, and component details.
 /// This struct is typically used in conjunction with a JPEG writer to embed Start of Frame header
 /// information in the image file.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SofHeader {
     /// The `JpegObj` representing various properties of the image.
     pub jpeg_obj: JpegObj,

@@ -2,7 +2,7 @@
 ///
 /// This structure holds information about the precision, dimensions, and components of a JPEG image,
 /// as well as various tables and parameters used in the compression process.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JpegObj {
     /// Precision of the image data in bits. Typically 8 bits for standard JPEG.
     pub precision: u8,

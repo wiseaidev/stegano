@@ -6,7 +6,7 @@ use crate::jpeg::writer::JpegWriter;
 /// The `SosHeader` struct is used to store information related to the start of a scan in a JPEG image.
 /// It includes a `jpeg_obj` field, which is an instance of the `JpegObj` struct representing the JPEG image.
 /// This struct is typically used in conjunction with a JPEG writer to encode the SOS header in the image file.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SosHeader {
     /// An instance of the `JpegObj` struct representing the JPEG image.
     pub jpeg_obj: JpegObj,

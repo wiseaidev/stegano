@@ -2,7 +2,7 @@
 ///
 /// This structure is specifically designed to store luminance and chrominance coefficients
 /// obtained from image processing operations.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DctStruct {
     /// 2D array storing the DCT coefficients. The outer array has a length of 2, representing
     /// luminance and chrominance components, and the inner array has a length of 64, representing

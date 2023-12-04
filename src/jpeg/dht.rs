@@ -6,7 +6,7 @@ use crate::jpeg::writer::JpegWriter;
 /// The `DhtHeader` struct is used to store information related to Huffman coding tables in a JPEG file.
 /// It contains a `huf` field, which is an instance of `Huffman` representing the Huffman coding information.
 /// This struct is typically used in conjunction with a JPEG writer to embed Huffman coding tables in the image file.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DhtHeader {
     /// The Huffman coding information stored in a separate struct.
     pub huf: Huffman,

@@ -3,7 +3,7 @@ use crate::jpeg::writer::JpegWriter;
 /// Struct representing the header of a JPEG File Interchange Format (JFIF) file.
 ///
 /// This struct contains information about the JFIF version.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JfifHeader {
     /// JFIF version information.
     pub version: u16,

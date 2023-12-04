@@ -10,9 +10,14 @@ use crate::jpeg::sos::SosHeader;
 use std::error::Error;
 use std::fs::File;
 use std::io;
-use std::io::BufReader;
-use std::io::ErrorKind;
-use std::io::Read;
+use std::io::SeekFrom;
+use std::io::{BufReader, ErrorKind, Read, Seek};
+
+// ANSI escape codes for text color
+const COLOR_RED: &str = "\x1b[91m";
+const COLOR_GREEN: &str = "\x1b[92m";
+const COLOR_YELLOW: &str = "\x1b[93m";
+const COLOR_RESET: &str = "\x1b[0m";
 
 type JpegHeadersResult = Result<
     (
@@ -88,6 +93,9 @@ pub fn read_marker(reader: &mut dyn Read) -> io::Result<u16> {
 /// # Arguments
 ///
 /// * `file_path` - A string slice representing the path to the JPEG file.
+/// * `start_chunk` - The index of the starting chunk to read.
+/// * `end_chunk` - The index of the ending chunk to read.
+/// * `num_chunks` - The number of chunks to read in each iteration.
 ///
 /// # Returns
 ///
@@ -111,7 +119,7 @@ pub fn read_marker(reader: &mut dyn Read) -> io::Result<u16> {
 ///
 /// let output_file = File::create("temp.jpeg").unwrap();
 ///
-/// match read_jpeg_headers("temp.jpeg") {
+/// match read_jpeg_headers("temp.jpeg", 0, 100, 10) {
 ///     Ok((jfif, comment, dqt, sof, dht, sos)) => {
 ///         // Process the obtained headers as needed
 ///     }
@@ -120,7 +128,12 @@ pub fn read_marker(reader: &mut dyn Read) -> io::Result<u16> {
 ///     }
 /// }
 /// ```
-pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
+pub fn read_jpeg_headers(
+    file_path: &str,
+    start_chunk: usize,
+    end_chunk: usize,
+    num_chunks: usize,
+) -> JpegHeadersResult {
     let file = File::open(file_path)?;
     let mut reader = BufReader::new(file);
 
@@ -129,11 +142,16 @@ pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
     let mut sof_header = None;
     let mut dht_header = None;
     let mut sos_header = None;
+    let mut image_width = 0;
+    let mut image_height = 0;
+    let mut count_chunk = 0;
 
     let mut comment_data = None;
     let mut encountered_dqt = false;
 
-    loop {
+    // Apply offset
+    reader.seek(SeekFrom::Current(start_chunk as i64))?;
+    for current_chunk in start_chunk..=end_chunk {
         let marker = read_marker(&mut reader)?;
 
         match marker {
@@ -142,11 +160,17 @@ pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
                 let mut data_length_bytes = [0u8; 2];
                 reader.read_exact(&mut data_length_bytes)?;
                 let data_length = u16::from_be_bytes(data_length_bytes);
-                let mut data = vec![0u8; data_length as usize];
+                let mut data = vec![0u8; data_length as usize + 2];
                 reader.read_exact(&mut data)?;
 
                 // Process data and store in the struct
                 jfif_header = Some(JfifHeader::new(&data).unwrap());
+                println!(
+                    "{}JFIF Header: {:?}{}",
+                    COLOR_GREEN,
+                    jfif_header.clone().unwrap(),
+                    COLOR_RESET
+                );
             }
             0xFFFE => {
                 // Comment Marker
@@ -156,6 +180,12 @@ pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
                 let mut data = vec![0u8; data_length as usize - 2];
                 reader.read_exact(&mut data)?;
                 comment_data = Some(data);
+                println!(
+                    "{}Comment Header: {:?}{}",
+                    COLOR_YELLOW,
+                    comment_data.clone().unwrap(),
+                    COLOR_RESET
+                );
             }
             0xFFDB => {
                 // DQT Marker
@@ -169,6 +199,13 @@ pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
                 let dct_struct = DctStruct::new(&data).unwrap();
                 dqt_header = Some(DqtHeader::new(dct_struct));
                 encountered_dqt = true;
+                println!(
+                    "{}DQT Header for Chunk#{}: {:?}{}",
+                    COLOR_GREEN,
+                    current_chunk,
+                    dqt_header.clone().unwrap(),
+                    COLOR_RESET
+                );
             }
             0xFFC0 => {
                 // SOF Marker
@@ -181,6 +218,15 @@ pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
                 // Process data and store in the struct
                 let jpeg_obj = process_sof_data(&data);
                 sof_header = Some(SofHeader::new(jpeg_obj));
+                image_width = sof_header.clone().unwrap().jpeg_obj.image_width;
+                image_height = sof_header.clone().unwrap().jpeg_obj.image_height;
+                println!(
+                    "{}SOF Header for Chunk#{}: {:?}{}",
+                    COLOR_YELLOW,
+                    current_chunk,
+                    sof_header.clone().unwrap(),
+                    COLOR_RESET
+                );
             }
             0xFFC4 => {
                 // DHT Marker
@@ -193,6 +239,10 @@ pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
                 // Process data and store in the struct
                 let huf_struct = process_dht_data(&data);
                 dht_header = Some(DhtHeader::new(huf_struct));
+                println!(
+                    "{}Processing DHT Header for Chunk#{}: {}",
+                    COLOR_RED, current_chunk, COLOR_RESET
+                );
             }
             0xFFDA => {
                 // SOS Marker
@@ -203,20 +253,46 @@ pub fn read_jpeg_headers(file_path: &str) -> JpegHeadersResult {
                 reader.read_exact(&mut data)?;
 
                 // Process data and store in the struct
-                let jpeg_obj = process_sos_data(&data);
+                let jpeg_obj = process_sos_data(&data, image_height, image_width);
                 sos_header = Some(SosHeader::new(jpeg_obj));
+                println!(
+                    "{}SOS Header for Chunk#{}: {:?}{}",
+                    COLOR_GREEN,
+                    current_chunk,
+                    sos_header.clone().unwrap(),
+                    COLOR_RESET
+                );
             }
             0xFFD9 => {
                 // EOI Marker - End of Headers
+                println!(
+                    "{}End of Headers for Chunk {}{}",
+                    COLOR_RED, current_chunk, COLOR_RESET
+                );
                 break;
             }
             0 => {
                 // EOI Marker - End of Headers
+                println!(
+                    "{}End of Headers for Chunk {}{}",
+                    COLOR_RED, current_chunk, COLOR_RESET
+                );
+
                 break;
             }
             _ => {
+                // println!("{}Ignoring Marker {} for Chunk {}{}", COLOR_YELLOW, marker, current_chunk, COLOR_RESET);
                 // Ignore other markers
             }
+        }
+        if current_chunk > end_chunk {
+            // Stop reading after the specified end chunk
+            break;
+        }
+        count_chunk += 1;
+        if count_chunk > num_chunks {
+            // Stop reading after the specified end chunk
+            break;
         }
     }
 
@@ -347,8 +423,8 @@ pub fn process_sof_data(data: &[u8]) -> JpegObj {
 /// let huffman_table = process_dht_data(&dht_data);
 /// ```
 pub fn process_dht_data(data: &[u8]) -> Huffman {
-    let image_height = u16::from_be_bytes([data[1], data[2]]);
-    let image_width = u16::from_be_bytes([data[3], data[4]]);
+    let image_height = u16::from_be_bytes([data[0], data[1]]);
+    let image_width = u16::from_be_bytes([data[2], data[3]]);
 
     let mut huf_struct = Huffman::new(image_width as i32, image_height as i32);
 
@@ -362,10 +438,10 @@ pub fn process_dht_data(data: &[u8]) -> Huffman {
             index += 1;
         } else {
             // Handle the case where the index goes beyond the data length
-            eprintln!(
-                "Warning: Index out of bounds when reading huf_struct.bits[{}].",
-                i
-            );
+            // eprintln!(
+            //     "Warning: Index out of bounds when reading huf_struct.bits[{}].",
+            //     i
+            // );
             break;
         }
 
@@ -375,10 +451,10 @@ pub fn process_dht_data(data: &[u8]) -> Huffman {
                 index += 1;
             } else {
                 // Handle the case where the index goes beyond the data length
-                eprintln!(
-                    "Warning: Index out of bounds when reading huf_struct.bits[{}][{}].",
-                    i, j
-                );
+                // eprintln!(
+                //     "Warning: Index out of bounds when reading huf_struct.bits[{}][{}].",
+                //     i, j
+                // );
                 break;
             }
         }
@@ -393,10 +469,10 @@ pub fn process_dht_data(data: &[u8]) -> Huffman {
             huf_struct.val[i] = huf_vals;
             index += bytes;
         } else {
-            eprintln!(
-                "Warning: Index out of bounds when reading huf_vals for huf_struct.val[{}].",
-                i
-            );
+            // eprintln!(
+            //     "Warning: Index out of bounds when reading huf_vals for huf_struct.val[{}].",
+            //     i
+            // );
         }
 
         let mut dht3 = vec![0xFF, 0xC4];
@@ -433,12 +509,10 @@ pub fn process_dht_data(data: &[u8]) -> Huffman {
 /// use stegano::jpeg::utils::process_sos_data;
 ///
 /// let sos_data: [u8; 15] = [8, 0, 100, 200, 3, 1, 1, 0x11, 0x00, 0x2C, 0x00, 0x00, 0x00, 0x00, 0x00];
-/// let jpeg_obj = process_sos_data(&sos_data);
+/// let jpeg_obj = process_sos_data(&sos_data, 10, 10);
 /// ```
-pub fn process_sos_data(data: &[u8]) -> JpegObj {
+pub fn process_sos_data(data: &[u8], image_height: u16, image_width: u16) -> JpegObj {
     let precision = data[0];
-    let image_height = u16::from_be_bytes([data[1], data[2]]);
-    let image_width = u16::from_be_bytes([data[3], data[4]]);
     let number_of_components = data[5];
 
     let mut comp_id = Vec::with_capacity(number_of_components as usize);
@@ -465,7 +539,7 @@ pub fn process_sos_data(data: &[u8]) -> JpegObj {
 
             index += 2;
         } else {
-            eprintln!("Warning: Index out of bounds when reading SOS component data.");
+            // eprintln!("Warning: Index out of bounds when reading SOS component data.");
             break;
         }
     }

@@ -11,7 +11,7 @@ const JPEG_NATURAL_ORDER: [usize; 64] = [
 /// This structure is used to perform Huffman encoding on quantized DCT coefficients obtained
 /// from image processing operations. It includes tables for DC and AC components, as well
 /// as methods for Huffman block encoding.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(unused_variables, dead_code)]
 pub struct Huffman {
     /// Number of bits in the buffer to be written.

@@ -110,18 +110,22 @@ pub struct ShowMetaCmd {
     pub input: String,
 
     /// Read number of chunks.
-    #[arg(short = 'n', long = "nb-chunks", default_value_t = 10)]
+    #[arg(short = 'n', long = "nb-chunks", default_value_t = 100)]
     pub nb_chunks: usize,
 
     /// The index of the start chunk to read from.
-    #[arg(short = 'c', long = "start", default_value_t = 1)]
+    #[arg(short = 's', long = "start", default_value_t = 0)]
     pub start_chunk: usize,
 
     /// The index of the end chunk to stop reading at.
-    #[arg(short = 'u', long = "end", default_value_t = 11)]
+    #[arg(short = 'e', long = "end", default_value_t = 100)]
     pub end_chunk: usize,
 
     /// Suppresses output messages.
-    #[arg(short = 's', long = "suppress", default_value_t = false)]
+    #[arg(short = 'r', long = "suppress", default_value_t = false)]
     pub suppress: bool,
+
+    /// Sets the type.
+    #[arg(short = 't', long = "type", default_value_t = String::from("PNG"))]
+    pub r#type: String,
 }

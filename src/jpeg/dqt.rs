@@ -7,7 +7,7 @@ use crate::jpeg::writer::JpegWriter;
 /// It contains a `dct` field, which is a `DctStruct` representing the quantization matrix.
 /// This struct is typically used in conjunction with a JPEG writer to embed quantization table
 /// information in the image file.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DqtHeader {
     /// The quantization matrix represented as a `DctStruct`.
     pub dct: DctStruct,
