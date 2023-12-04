@@ -18,7 +18,7 @@
 //! 1. Read and process 10 chunks from the image:
 //!
 //!    ```bash
-//!    $ stegano show-meta -i image_file_name
+//!    $ stegano show-meta -i image_file_name -s 1 -n 11
 //!    It is a valid PNG file. Let's process it!
 //!    ---- Chunk #1 ----
 //!    Chunk offset: 13
@@ -65,14 +65,14 @@
 //! 2. Process the image in silent mode:
 //!
 //!    ```bash
-//!    $ stegano show-meta -i image_file_name -s
+//!    $ stegano show-meta -i image_file_name -r
 //!    ```
 //!
 //! 3. Read chunks at different positions:
 //!
 //!    ```bash
 //!    # Read 1 chunk starting from position 0
-//!    $ stegano show-meta -i image_file_name -c 0 -u 10 -n 1
+//!    $ stegano show-meta -i image_file_name -s 0 -e 10 -n 1
 //!    It is a valid PNG file. Let's process it!
 //!    ---- Chunk #0 ----
 //!    Chunk offset: 13
@@ -80,7 +80,7 @@
 //!    Chunk crc: 3d008
 //!
 //!    # Read 3 chunks starting from position 10000
-//!    $ stegano show-meta -i image_file_name -c 10000 -u 200000 -n 3
+//!    $ stegano show-meta -i image_file_name -s 10000 -e 200000 -n 3
 //!    It is a valid PNG file. Let's process it!
 //!    ---- Chunk #10000 ----
 //!    Chunk offset: 13
@@ -136,10 +136,10 @@
 //! |                         |                                                           |
 //! | **Metadata Options**    |                                                           |
 //! | `-i` or `--input`       | Sets the input image file for metadata extraction.         |
-//! | `-n` or `--nb-chunks`   | Read a specific number of chunks (default is 10).          |
-//! | `-c` or `--start`       | Sets the index of the start chunk to read from (default 1). |
-//! | `-u` or `--end`         | Sets the index of the end chunk to stop reading at (default 11).|
-//! | `-s` or `--suppress`    | Suppresses output messages.                                |
+//! | `-n` or `--nb-chunks`   | Read a specific number of chunks (default is 100).          |
+//! | `-s` or `--start`       | Sets the index of the start chunk to read from (default 0). |
+//! | `-e` or `--end`         | Sets the index of the end chunk to stop reading at (default 100).|
+//! | `-r` or `--suppress`    | Suppresses output messages.                                |
 //!
 //! # GitHub Repository
 //!
