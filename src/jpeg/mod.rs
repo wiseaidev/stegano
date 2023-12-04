@@ -1,5 +1,6 @@
 pub mod comment;
 pub mod dct;
+pub mod dht;
 pub mod dqt;
 pub mod header;
 pub mod huff;
