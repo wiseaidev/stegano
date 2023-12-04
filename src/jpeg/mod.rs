@@ -1,3 +1,4 @@
+pub mod comment;
 pub mod dct;
 pub mod header;
 pub mod huff;
