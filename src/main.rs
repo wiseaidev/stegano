@@ -5,7 +5,7 @@ use std::io::Write;
 use stegano::cli::{Cli, SteganoCommands};
 use stegano::jpeg::utils::read_jpeg_headers;
 use stegano::models::MetaChunk;
-use stegano::utils::xor_encode_decode;
+use stegano::utils::{print_hex, xor_encode_decode};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
@@ -22,9 +22,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut file_writer = File::create(encrypt_cmd.output.clone())?;
                 let encoded_data =
                     xor_encode_decode(encrypt_cmd.payload.as_bytes(), &encrypt_cmd.key);
-                if !encrypt_cmd.suppress {
-                    println!("Encoded bytes {:?}", encoded_data);
-                }
                 // Calculate CRC for the encoded data
                 let mut bytes_msb = Vec::new();
                 bytes_msb
@@ -34,8 +31,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let crc = crc32_little(meta_chunk.chk.crc, &bytes_msb);
 
                 // Update the MetaChunk with the encoded data and CRC
-                meta_chunk.chk.data = encoded_data;
+                meta_chunk.chk.data = encoded_data.clone();
                 meta_chunk.chk.crc = crc;
+                if !encrypt_cmd.suppress {
+                    println!("\x1b[92m------- Chunk -------\x1b[0m");
+                    println!("Offset: {:?}", encrypt_cmd.offset);
+                    println!("Size: {:?}", encoded_data.len());
+                    println!("CRC: {:x}", meta_chunk.chk.crc);
+                    print_hex(&encoded_data, encrypt_cmd.offset.try_into().unwrap());
+                    print!("\x1b[0m");
+                    println!("\x1b[92m-------- End --------\x1b[0m");
+                    println!();
+                }
 
                 // Create a new mutable reference to file_reader
                 let mut file_reader = &file;
