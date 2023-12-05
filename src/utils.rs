@@ -60,3 +60,62 @@ pub fn u64_to_u8_array(value: u64) -> [u8; 8] {
 
     _result
 }
+
+/// Prints a hexadecimal representation of the input data with ASCII interpretation.
+///
+/// # Arguments
+///
+/// * `data` - A slice of u8 representing the data to be printed.
+/// * `offset` - An offset value to be added to the printed hexadecimal addresses.
+///
+/// # Examples
+///
+/// ```rust
+/// use stegano::utils::print_hex;
+///
+/// let my_data: Vec<u8> = (0..100).collect();
+/// let my_offset: u64 = 0;
+/// print_hex(&my_data, my_offset);
+/// ```
+///
+/// # Output
+///
+/// The function prints the hexadecimal representation of the input data in chunks of 20 bytes.
+/// Each chunk is displayed with an address offset, hexadecimal values, ASCII interpretation,
+/// and alternating colors (blue and green) for better visibility.
+///
+/// Hexadecimal values are printed in the following format:
+///
+/// 00000000 | \x1b[94m00\x1b[0m \x1b[92m01\x1b[0m \x1b[94m02\x1b[0m \x1b[92m03\x1b[0m \x1b[94m04\x1b[0m ... | ........ ........ ........ ........
+/// 00000014 | \x1b[94m14\x1b[0m \x1b[92m15\x1b[0m \x1b[94m16\x1b[0m \x1b[92m17\x1b[0m \x1b[94m18\x1b[0m ... | ........ ........ ........ ........
+/// ...
+///
+/// The ASCII interpretation is displayed on the right, and non-printable ASCII characters
+/// are represented as dots ('.').
+pub fn print_hex(data: &[u8], offset: u64) {
+    for (i, chunk) in data.chunks(20).enumerate() {
+        print!("{:08} | ", offset + 20 * i as u64);
+
+        for (j, &byte) in chunk.iter().enumerate() {
+            // Alternating colors (blue and green)
+            let color = if j % 2 == 0 { "\x1b[94m" } else { "\x1b[92m" };
+            print!("{}{:02X} \x1b[0m", color, byte);
+        }
+
+        print!("| ");
+
+        for byte_chunk in chunk.chunks(4) {
+            for byte in byte_chunk {
+                print!(
+                    "{}",
+                    if byte.is_ascii() && byte.is_ascii_graphic() {
+                        *byte as char
+                    } else {
+                        '.'
+                    }
+                );
+            }
+        }
+        println!();
+    }
+}
