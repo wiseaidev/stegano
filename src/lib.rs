@@ -255,6 +255,7 @@
 //! | Option                  | Description                                               |
 //! |-------------------------|-----------------------------------------------------------|
 //! | **Encryption Options**  |                                                           |
+//! | `-a` or `--algo`        | Sets the algorithm for encryption (default is "aes").        |
 //! | `-i` or `--input`       | Sets the input file for encryption.                        |
 //! | `-o` or `--output`      | Sets the output file for the encrypted payload (default is "output.png").|
 //! | `-k` or `--key`         | Sets the key for payload encryption (default is "key").    |
@@ -264,6 +265,7 @@
 //! | `-t` or `--type`        | Sets the type (default is "PNG").                          |
 //! |                         |                                                           |
 //! | **Decryption Options**  |                                                           |
+//! | `-a` or `--algo`        | Sets the algorithm for decryption (default is "aes").        |
 //! | `-i` or `--input`       | Sets the input file for decryption.                        |
 //! | `-o` or `--output`      | Sets the output file for the decrypted payload (default is "output.png").|
 //! | `-k` or `--key`         | Sets the key for payload decryption (default is "key").    |

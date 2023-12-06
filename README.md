@@ -336,14 +336,18 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
    00159041 | 0D 92 AD 08 88 4C CF F2 A4 2F C5 6B AE 42 6C DF | .....L.../.k.Bl.
    -------- End --------
 
-   Your decoded secret is: "passhello\u{c}_�\u{6}�>bza�\r��\u{8}�L��/�k�Bl�"
+   Your decoded secret is: "invatm{vq\u{1b}M�\u{1f}�$\u{7f}|a��\u{19}��\r�A�� �y�J{�"
    ```
+
+> **Note**<br>
+By default, Stegano uses the AES-128 encryption algorithm. The maximum key length supported is 16 characters. If you provide a longer key, it will be automatically padded or truncated to fit the required length.
 
 ## 🎨 Options
 
 | Option                  | Description                                               |
 |-------------------------|-----------------------------------------------------------|
 | **Encryption Options**  |                                                           |
+| `-a` or `--algo`        | Sets the algorithm for encryption (default is "aes").        |
 | `-i` or `--input`       | Sets the input file for encryption.                        |
 | `-o` or `--output`      | Sets the output file for the encrypted payload (default is "output.png").|
 | `-k` or `--key`         | Sets the key for payload encryption (default is "key").    |
@@ -353,6 +357,7 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
 | `-t` or `--type`        | Sets the type (default is "PNG").                          |
 |                         |                                                           |
 | **Decryption Options**  |                                                           |
+| `-a` or `--algo`        | Sets the algorithm for decryption (default is "aes").        |
 | `-i` or `--input`       | Sets the input file for decryption.                        |
 | `-o` or `--output`      | Sets the output file for the decrypted payload (default is "output.png").|
 | `-k` or `--key`         | Sets the key for payload decryption (default is "key").    |
