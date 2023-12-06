@@ -15,6 +15,7 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+aes = "0.8.3"
 clap = { version = "4.4.10", features = ["derive"] }
 crc32-v2 = "0.0.4"
 

@@ -1,5 +1,5 @@
 use crate::cli::{DecryptCmd, EncryptCmd, ShowMetaCmd};
-use crate::utils::{print_hex, u64_to_u8_array, xor_encode_decode};
+use crate::utils::{decrypt_data, print_hex, u64_to_u8_array, xor_encrypt_decrypt};
 use std::fs::File;
 use std::io::{copy, Error, ErrorKind, Read, Seek, SeekFrom, Write};
 use std::mem;
@@ -118,7 +118,8 @@ impl MetaChunk {
         let b_arr = u64_to_u8_array(header.header);
         let offset = file.stream_position()?;
         if &b_arr[1..4] != b"PNG" {
-            panic!("Not a valid PNG format");
+            let err = Error::new(ErrorKind::Other, "Not a valid PNG file!");
+            return Err(err);
         } else if !suppress {
             println!("It is a valid PNG file. Let's process it! \n");
             // print header
@@ -220,12 +221,14 @@ impl MetaChunk {
             Ok(_) => {
                 // Successfully read the expected number of bytes
                 self.chk.size = u32::from_be_bytes(size_bytes);
-                let min_non_zero_number = *size_bytes
-                    .iter()
-                    .filter(|&&byte| byte != 0)
-                    .min_by(|a, b| a.cmp(b))
-                    .unwrap_or(&0);
-                self.chk.size = min_non_zero_number as u32;
+                if self.chk.size > 100 {
+                    let min_non_zero_number = *size_bytes
+                        .iter()
+                        .filter(|&&byte| byte != 0)
+                        .min_by(|a, b| a.cmp(b))
+                        .unwrap_or(&0);
+                    self.chk.size = min_non_zero_number as u32;
+                }
                 // self.chk.size = size_bytes[3] as u32;
             }
             Err(err) if err.kind() == ErrorKind::UnexpectedEof => {
@@ -411,14 +414,25 @@ impl MetaChunk {
         w.write_all(&buff).unwrap();
         let offset = self.get_offset(r);
         self.read_chunk(r);
-        let decoded_data = xor_encode_decode(&self.chk.data, &c.key);
-        let decoded_string = String::from_utf8_lossy(&decoded_data);
+        let mut decrypted_data: Vec<u8> = vec![0];
+        match (*c.algorithm.to_lowercase()).into() {
+            "aes" => {
+                decrypted_data = decrypt_data(&c.key, &self.chk.data);
+            }
+            "xor" => {
+                decrypted_data = xor_encrypt_decrypt(&self.chk.data, &c.key);
+            }
+            _ => {}
+        }
+
+        let decoded_string = String::from_utf8_lossy(&decrypted_data);
+        let unpadded_string = decoded_string.trim_end_matches('\0');
         if !c.suppress {
             println!("\x1b[92m------- Chunk -------\x1b[0m");
-            println!("Offset: {:?}", offset);
+            println!("Offset: {:?}", c.offset);
             println!("Size: {:?}", self.chk.size);
             println!("CRC: {:x}", self.chk.crc);
-            print_hex(&decoded_data, offset);
+            print_hex(&decrypted_data, offset);
             print!("\x1b[0m");
             println!("\x1b[92m-------- End --------\x1b[0m");
             println!();
@@ -427,7 +441,7 @@ impl MetaChunk {
             .expect("Error seeking to offset");
         println!(
             "\x1b[38;5;7mYour decoded secret is:\x1b[0m \x1b[38;5;214m{:?}\x1b[0m",
-            decoded_string
+            unpadded_string
         );
         copy(r, &mut w).unwrap();
     }

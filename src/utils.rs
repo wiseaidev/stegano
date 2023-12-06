@@ -1,11 +1,12 @@
+use aes::cipher::{generic_array::GenericArray, BlockDecrypt, BlockEncrypt, KeyInit};
+use aes::Aes128;
 use std::mem;
-
-/// Performs XOR encoding or decoding on the provided byte slice using the specified key.
+/// Performs XOR encrypting or decrypting on the provided byte slice using the specified key.
 ///
 /// # Arguments
 ///
-/// * `input` - The input byte slice to be encoded or decoded.
-/// * `key` - The key used for XOR encoding or decoding. It is repeated cyclically if shorter than the input.
+/// * `input` - The input byte slice to be encrypted or decrypted.
+/// * `key` - The key used for XOR encrypting or decrypting. It is repeated cyclically if shorter than the input.
 ///
 /// # Returns
 ///
@@ -14,15 +15,15 @@ use std::mem;
 /// # Examples
 ///
 /// ```
-/// use stegano::utils::xor_encode_decode;
+/// use stegano::utils::xor_encrypt_decrypt;
 ///
 /// let input = b"Hello, World!";
 /// let key = "secret_key";
-/// let encoded = xor_encode_decode(input, key);
-/// let decoded = xor_encode_decode(&encoded, key);
-/// assert_eq!(input, decoded.as_slice());
+/// let encrypted = xor_encrypt_decrypt(input, key);
+/// let decrypted = xor_encrypt_decrypt(&encrypted, key);
+/// assert_eq!(input, decrypted.as_slice());
 /// ```
-pub fn xor_encode_decode(input: &[u8], key: &str) -> Vec<u8> {
+pub fn xor_encrypt_decrypt(input: &[u8], key: &str) -> Vec<u8> {
     let mut b_arr = Vec::with_capacity(input.len());
     for (i, &byte) in input.iter().enumerate() {
         b_arr.push(byte ^ key.as_bytes()[i % key.len()]);
@@ -118,4 +119,127 @@ pub fn print_hex(data: &[u8], offset: u64) {
         }
         println!();
     }
+}
+
+/// Pad the input slice with zeros to create a fixed-size array of 16 bytes.
+///
+/// # Arguments
+///
+/// * `slice` - A slice of u8 to be padded with zeros.
+///
+/// # Returns
+///
+/// A fixed-size array of 16 bytes containing the original slice content with zero-padding.
+///
+/// # Examples
+///
+/// ```
+/// use stegano::utils::pad_with_zeros;
+///
+/// let input_slice: &[u8] = &[1, 2, 3, 4, 5];
+/// let padded_array: [u8; 16] = pad_with_zeros(input_slice);
+/// assert_eq!(padded_array, [1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+/// ```
+pub fn pad_with_zeros(slice: &[u8]) -> [u8; 16] {
+    let mut padded_array: [u8; 16] = [0; 16];
+    let len = std::cmp::min(slice.len(), padded_array.len());
+    padded_array[..len].copy_from_slice(&slice[..len]);
+    padded_array
+}
+
+/// Encrypts the payload using AES-128 encryption algorithm with zero-padding.
+///
+/// # Arguments
+///
+/// * `key` - A string representing the encryption key.
+/// * `payload` - A string representing the payload to be encrypted.
+///
+/// # Returns
+///
+/// A vector of u8 containing the encrypted payload.
+///
+/// # Examples
+///
+/// ```
+/// use stegano::utils::encrypt_payload;
+///
+/// let key = "secret_key";
+/// let payload = "confidential_data";
+/// let encrypted_data = encrypt_payload(key, payload);
+/// assert_eq!(encrypted_data.len(), 16);
+/// ```
+pub fn encrypt_payload(key: &str, payload: &str) -> Vec<u8> {
+    let in_key: &[u8; 16] = &pad_with_zeros(key.as_bytes());
+    let key = GenericArray::clone_from_slice(in_key);
+
+    if payload.len() <= 16 {
+        let in_payload: &[u8; 16] = &pad_with_zeros(payload.as_bytes());
+        let mut block = GenericArray::clone_from_slice(in_payload);
+
+        let cipher = Aes128::new(&key);
+        cipher.encrypt_block(&mut block);
+        block.to_vec()
+    } else {
+        let mut encrypted_data: Vec<u8> = Vec::new();
+
+        for (i, chunk) in payload.as_bytes().chunks_exact(16).enumerate() {
+            let in_payload: &[u8; 16] = &pad_with_zeros(chunk);
+            let mut block = GenericArray::clone_from_slice(in_payload);
+
+            let cipher = Aes128::new(&key);
+            cipher.encrypt_block(&mut block);
+
+            if i > 0 {
+                encrypted_data.extend_from_slice(&block);
+            } else {
+                encrypted_data = block.to_vec();
+            }
+        }
+
+        encrypted_data
+    }
+}
+
+/// Decrypts the data using AES-128 decryption algorithm with zero-padding.
+///
+/// # Arguments
+///
+/// * `key` - A string representing the decryption key.
+/// * `data` - A slice of u8 representing the data to be decrypted.
+///
+/// # Returns
+///
+/// A vector of u8 containing the decrypted data.
+///
+/// # Examples
+///
+/// ```
+/// use stegano::utils::decrypt_data;
+///
+/// let key = "secret_key";
+/// let encrypted_data: Vec<u8> = vec![1, 2, 3, 4, 5, 0, 0, 0, 0, 2, 3, 0, 0, 5, 0, 7];
+/// let decrypted_data = decrypt_data(key, &encrypted_data);
+/// assert_eq!(decrypted_data.len(), 16);
+/// ```
+pub fn decrypt_data(key: &str, data: &[u8]) -> Vec<u8> {
+    let in_key: &[u8; 16] = &pad_with_zeros(key.as_bytes());
+    let key = GenericArray::clone_from_slice(in_key);
+
+    let mut decrypted_data: Vec<u8> = Vec::new();
+
+    for (i, chunk) in data.chunks_exact(16).enumerate() {
+        let in_payload: &[u8; 16] = &pad_with_zeros(chunk);
+        let mut block = GenericArray::clone_from_slice(in_payload);
+
+        let cipher = Aes128::new(&key);
+        cipher.decrypt_block(&mut block);
+
+        if i > 0 {
+            decrypted_data.extend_from_slice(&block);
+        } else {
+            decrypted_data = block.to_vec();
+        }
+    }
+
+    decrypted_data
 }

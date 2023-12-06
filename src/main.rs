@@ -5,7 +5,7 @@ use std::io::Write;
 use stegano::cli::{Cli, SteganoCommands};
 use stegano::jpeg::utils::read_jpeg_headers;
 use stegano::models::MetaChunk;
-use stegano::utils::{print_hex, xor_encode_decode};
+use stegano::utils::{encrypt_payload, print_hex, xor_encrypt_decrypt};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
@@ -20,25 +20,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .expect("Error processing the png file!");
 
                 let mut file_writer = File::create(encrypt_cmd.output.clone())?;
-                let encoded_data =
-                    xor_encode_decode(encrypt_cmd.payload.as_bytes(), &encrypt_cmd.key);
-                // Calculate CRC for the encoded data
+                let encrypted_data: Vec<u8> = match (*encrypt_cmd.algorithm.to_lowercase()).into() {
+                    "aes" => encrypt_payload(&encrypt_cmd.key, &encrypt_cmd.payload),
+                    "xor" => xor_encrypt_decrypt(encrypt_cmd.payload.as_bytes(), &encrypt_cmd.key),
+                    _ => {
+                        return Err("Unsupported algorithm!".into());
+                    }
+                };
+                // Calculate CRC for the encrypted data
                 let mut bytes_msb = Vec::new();
                 bytes_msb
                     .write_all(&meta_chunk.chk.r#type.to_be_bytes())
                     .unwrap();
-                bytes_msb.write_all(&encoded_data).unwrap();
+                bytes_msb.write_all(&encrypted_data).unwrap();
                 let crc = crc32_little(meta_chunk.chk.crc, &bytes_msb);
 
-                // Update the MetaChunk with the encoded data and CRC
-                meta_chunk.chk.data = encoded_data.clone();
+                // Update the MetaChunk with the encrypted data and CRC
+                meta_chunk.chk.data = encrypted_data.clone();
                 meta_chunk.chk.crc = crc;
                 if !encrypt_cmd.suppress {
                     println!("\x1b[92m------- Chunk -------\x1b[0m");
                     println!("Offset: {:?}", encrypt_cmd.offset);
-                    println!("Size: {:?}", encoded_data.len());
+                    println!("Size: {:?}", encrypted_data.len());
                     println!("CRC: {:x}", meta_chunk.chk.crc);
-                    print_hex(&encoded_data, encrypt_cmd.offset.try_into().unwrap());
+                    print_hex(&encrypted_data, encrypt_cmd.offset.try_into().unwrap());
                     print!("\x1b[0m");
                     println!("\x1b[92m-------- End --------\x1b[0m");
                     println!();
@@ -49,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 meta_chunk.write_encrypted_data(&mut file_reader, &encrypt_cmd, &mut file_writer);
 
-                println!("Image encoded and written successfully!");
+                println!("Image encrypted and written successfully!");
             }
             SteganoCommands::Decrypt(decrypt_cmd) => {
                 let mut file = File::open(decrypt_cmd.input.clone())?;

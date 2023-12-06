@@ -68,6 +68,10 @@ pub struct EncryptCmd {
     /// Sets the type.
     #[arg(short = 't', long = "type", default_value_t = String::from("PNG"))]
     pub r#type: String,
+
+    /// Sets the algorithm.
+    #[arg(short = 'a', long = "algo", default_value_t = String::from("aes"))]
+    pub algorithm: String,
 }
 
 /// Subcommand for decryption.
@@ -100,6 +104,10 @@ pub struct DecryptCmd {
     /// Sets the type.
     #[arg(short = 't', long = "type", default_value_t = String::from("PNG"))]
     pub r#type: String,
+
+    /// Sets the algorithm.
+    #[arg(short = 'a', long = "algo", default_value_t = String::from("aes"))]
+    pub algorithm: String,
 }
 
 /// Subcommand for showing metadata.
