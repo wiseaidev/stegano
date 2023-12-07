@@ -10,6 +10,7 @@
 ## 📖 Table of Contents
 
 - [Installation](#-installation)
+- [Features](#-features)
 - [Usage](#-usage)
 - [Options](#-options)
 - [Contributing](#-contributing)
