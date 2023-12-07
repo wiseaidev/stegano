@@ -285,8 +285,8 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
 
 1. Encrypt and inject data in an image:
 
-   > [!NOTE]
-   Stegano automatically identifies the location of the `IEND` marker in a PNG image and injects the payload at a position 8 bytes before the IEND marker by default. This is done to prevent any corruption of the original image.
+> [!NOTE]
+Stegano automatically identifies the location of the `IEND` marker in a PNG image and injects the payload at a position 8 bytes before the IEND marker by default. This is done to prevent any corruption of the original image.
 
    ```bash
    $ stegano encrypt -i input_image_file_name -k 'pass' -p 'hello' -o output_image_file_name
@@ -308,8 +308,8 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
    Your payload has been encrypted and written at offset 159028 successfully!
    ```
 
-   > [!NOTE]
-   By default, the maximum key length is restricted to 16 characters.
+> [!NOTE]
+By default, the maximum key length is restricted to 16 characters.
 
 1. Using the previously obtained offset, you can decrypt and extract the secret information from an image, as well as remove the secret content from the image:
 
