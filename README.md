@@ -5,6 +5,8 @@
 ![Rust](https://img.shields.io/badge/rust-stable-orange)
 [![License](https://img.shields.io/crates/l/stegano.svg)](https://opensource.org/licenses/MIT)
 
+![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ushyby2i2b14qbndshg5.png)
+
 > 🚀 `stegano`: Stegano is a powerful and versatile steganography tool designed to empower you with a wide range of image manipulation and data encryption capabilities.
 
 ## 📖 Table of Contents
