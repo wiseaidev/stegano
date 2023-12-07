@@ -23,6 +23,15 @@ To install `stegano`, use the following Cargo command:
 cargo install --locked stegano
 ```
 
+## 🖼️ Features
+
+- Parse both PNG and JPEG images effortlessly.
+- Gain insights into the internal structure of PNG images with a hex dump view.
+- Seamlessly inject payloads into images at the `IEND - 8` bytes position marker.
+- Safely hide your data without compromising the integrity of the original image.
+- Utilize the AES-128 algorithm for secure encryption and decryption of hidden data.
+- No limitations on the length of the payload that can be injected.
+
 ## 🛠️ Usage
 
 `stegano` provides three subcommands:
@@ -112,83 +121,84 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
 
    ---- Header ----
    00000000 | 89 50 4E 47 0D 0A 1A 0A | .PNG....
-   ---- End ----
+   ----- End ------
 
    ---- Chunk #0 ----
-   Offset: 13
-   Size: 68
-   CRC: fa130394
-   00000013 | 00 0A 36 08 06 00 00 00 AF 77 9F 68 00 00 00 01 73 52 47 42 | ..6......w.h....sRGB
-   00000033 | 00 AE CE 1C E9 00 00 20 00 49 44 41 54 78 5E EC DD 75 BC 6F | .........IDATx^..u.o
-   00000053 | 55 9D FF F1 CF 39 B7 83 1B 70 69 91 54 50 50 46 09 51 41 C5 | U....9...pi.TPPF.QA.
-   00000073 | 8E F9 19 94 98 E0 08 12 | ........
-   ------ End ------
+   Offset: 8
+   Size: 71
+   CRC: 48142467
+   00000008 | 00 00 00 0D 49 48 44 52 00 00 05 A0 00 00 03 D0 08 06 00 00 | ....IHDR............
+   00000028 | 00 C0 52 DC 33 00 00 00 01 73 52 47 42 00 AE CE 1C E9 00 00 | ..R.3....sRGB.......
+   00000048 | 20 00 49 44 41 54 78 5E EC 9D 07 98 24 45 D9 80 BF DD 0B 5C | ..IDATx^....$E.....\
+   00000068 | E2 8E 8C 24 C9 41 50 09 82 A8 80 | ...$.AP....
+   ------- End -------
 
    ---- Chunk #1 ----
-   Offset: 98
-   Size: 70
-   CRC: 80000208
-   00000098 | 42 74 08 09 0B C5 E2 27 17 A5 E3 22 48 DE E4 C6 39 BF C7 DA | Bt.....'..."H...9...
-   00000118 | DF DA B1 F6 5E B9 BF 75 5E E7 9F E1 9E EF CA E7 5E FB 7B F9 | ....^..u^.......^.{.
-   00000138 | F1 7B FB 59 23 97 5E 7D E3 B8 F0 13 4D 60 7C 1C CE 68 98 0C | .{.Y#.^}....M`|..h..
-   00000158 | 84 00 02 08 20 80 00 02 08 20 | ..........
-   ------ End ------
+   Offset: 83
+   Size: 17
+   CRC: 241924a7
+   00000083 | A2 64 38 B2 81 20 19 91 24 0A 28 48 D2 9F AC 92 91 | .d8.....$.(H.....
+   ------- End -------
 
    ---- Chunk #2 ----
-   Offset: 185
-   Size: 2
-   CRC: 20800002
-   00000185 | 02 08 | ..
-   ------ End ------
+   Offset: 112
+   Size: 3
+   CRC: 9e0e55d5
+   00000112 | ED D9 EE | ...
+   ------- End -------
 
    ---- Chunk #3 ----
-   Offset: 204
-   Size: 8
-   CRC: 460800c6
-   00000204 | 32 32 32 54 FB E9 F5 66 | 222T...f
-   ------ End ------
+   Offset: 127
+   Size: 51
+   CRC: 400002d6
+   00000127 | B2 53 5D F5 D5 5B D5 7D C7 3B DF 7E D5 F5 C7 DB EF EF 15 AE | .S]..[.}.;.~........
+   00000147 | 52 08 F4 F6 82 36 0A 16 1E A5 6C 34 3A 85 00 04 20 00 01 08 | R....6....l4:.......
+   00000167 | 40 00 02 10 80 00 04 20 00 01 08 | @..........
+   ------- End -------
 
    ---- Chunk #4 ----
-   Offset: 229
-   Size: 2
-   CRC: 20800002
-   00000229 | 02 08 | ..
-   ------ End ------
+   Offset: 190
+   Size: 4
+   CRC: fa7621a0
+   00000190 | BA E0 51 D6 | ..Q.
+   ------- End -------
 
    ---- Chunk #5 ----
-   Offset: 248
-   Size: 8
-   CRC: 20800002
-   00000248 | 00 02 08 20 80 00 02 08 | ........
-   ------ End ------
+   Offset: 206
+   Size: 60
+   CRC: 1084000
+   00000206 | FD EF 30 7A 84 00 04 20 00 01 08 40 00 02 10 80 00 04 20 00 | ..0z.......@........
+   00000226 | 01 08 40 00 02 3E 09 20 5F 03 9A 88 68 9F FB AA D6 17 02 DA | ..@..>.._...h.......
+   00000246 | 33 53 E4 33 C2 D9 F3 96 A2 3B 08 40 00 02 10 80 00 04 20 00 | 3S.3.....;.@........
+   ------- End -------
 
    ---- Chunk #6 ----
-   Offset: 273
-   Size: 8
-   CRC: 20190601
-   00000273 | 95 00 60 24 4B C2 7F 91 | ..`$K...
-   ------ End ------
+   Offset: 278
+   Size: 2
+   CRC: 5b4823a1
+   00000278 | 02 03 | ..
+   ------- End -------
 
    ---- Chunk #7 ----
-   Offset: 298
+   Offset: 292
    Size: 4
-   CRC: 40000104
-   00000298 | 00 01 04 10 | ....
-   ------ End ------
+   CRC: 3d6e1dba
+   00000292 | 4B 3E 23 9A | K>#.
+   ------- End -------
 
    ---- Chunk #8 ----
-   Offset: 319
-   Size: 1
-   CRC: 4104000
-   00000319 | 01 | .
-   ------ End ------
+   Offset: 308
+   Size: 4
+   CRC: 42000
+   00000308 | 00 02 10 80 | ....
+   ------- End -------
 
    ---- Chunk #9 ----
-   Offset: 337
-   Size: 16
-   CRC: 20820
-   00000337 | 23 E1 BF 08 88 A6 21 B8 5A D9 24 C4 E7 08 20 80 | #.....!.Z.$.....
-   ------ End ------
+   Offset: 324
+   Size: 1
+   CRC: 886924b4
+   00000324 | E0 | .
+   ------- End -------
    ```
 
 1. Process the png image in silent mode: 
@@ -228,73 +238,91 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
 
    ---- Header ----
    00000000 | 89 50 4E 47 0D 0A 1A 0A | .PNG....
-   ---- End ----
+   ----- End ------
 
    ---- Chunk #0 ----
-   Offset: 13
-   Size: 68
-   CRC: fa130394
-   00000013 | 00 0A 36 08 06 00 00 00 AF 77 9F 68 00 00 00 01 73 52 47 42 | ..6......w.h....sRGB
-   00000033 | 00 AE CE 1C E9 00 00 20 00 49 44 41 54 78 5E EC DD 75 BC 6F | .........IDATx^..u.o
-   00000053 | 55 9D FF F1 CF 39 B7 83 1B 70 69 91 54 50 50 46 09 51 41 C5 | U....9...pi.TPPF.QA.
-   00000073 | 8E F9 19 94 98 E0 08 12 | ........
-   ------ End ------
+   Offset: 8
+   Size: 71
+   CRC: 48142467
+   00000008 | 00 00 00 0D 49 48 44 52 00 00 05 A0 00 00 03 D0 08 06 00 00 | ....IHDR............
+   00000028 | 00 C0 52 DC 33 00 00 00 01 73 52 47 42 00 AE CE 1C E9 00 00 | ..R.3....sRGB.......
+   00000048 | 20 00 49 44 41 54 78 5E EC 9D 07 98 24 45 D9 80 BF DD 0B 5C | ..IDATx^....$E.....\
+   00000068 | E2 8E 8C 24 C9 41 50 09 82 A8 80 | ...$.AP....
+   ------- End -------
 
-   # Read 3 chunks starting from position 10000
-   $ stegano show-meta -i image_file_name -s 10000 -e 200000 -n 3
+   # Read 3 chunks starting from position 40000
+   $ stegano show-meta -i image_file_name -s 40000 -e 200000 -n 3
    It is a valid PNG file. Let's process it! 
 
    ---- Header ----
    00000000 | 89 50 4E 47 0D 0A 1A 0A | .PNG....
-   ---- End ----
+   ----- End ------
 
-   ---- Chunk #10000 ----
-   Offset: 13
-   Size: 68
-   CRC: fa130394
-   00000013 | 00 0A 36 08 06 00 00 00 AF 77 9F 68 00 00 00 01 73 52 47 42 | ..6......w.h....sRGB
-   00000033 | 00 AE CE 1C E9 00 00 20 00 49 44 41 54 78 5E EC DD 75 BC 6F | .........IDATx^..u.o
-   00000053 | 55 9D FF F1 CF 39 B7 83 1B 70 69 91 54 50 50 46 09 51 41 C5 | U....9...pi.TPPF.QA.
-   00000073 | 8E F9 19 94 98 E0 08 12 | ........
-   ------ End ------
+   ---- Chunk #40000 ----
+   Offset: 40000
+   Size: 49
+   CRC: e3a1975e
+   00040000 | 16 03 F2 3B 23 05 BD 79 7E AE 37 2D 90 1C E8 B8 4F E7 2E 34 | ...;#..y~.7-....O..4
+   00040020 | 42 9E 43 55 01 1D 6E 01 6D AD 7E 76 5A 40 CB 6A 6A 6B 2C 87 | B.CU..n.m.~vZ@.jjk,.
+   00040040 | 87 06 84 5C 1D 8B 60 67 11 | ...\..`g.
+   ------- End -------
 
-   ---- Chunk #10001 ----
-   Offset: 98
-   Size: 70
-   CRC: 80000208
-   00000098 | 42 74 08 09 0B C5 E2 27 17 A5 E3 22 48 DE E4 C6 39 BF C7 DA | Bt.....'..."H...9...
-   00000118 | DF DA B1 F6 5E B9 BF 75 5E E7 9F E1 9E EF CA E7 5E FB 7B F9 | ....^..u^.......^.{.
-   00000138 | F1 7B FB 59 23 97 5E 7D E3 B8 F0 13 4D 60 7C 1C CE 68 98 0C | .{.Y#.^}....M`|..h..
-   00000158 | 84 00 02 08 20 80 00 02 08 20 | ..........
-   ------ End ------
+   ---- Chunk #40001 ----
+   Offset: 40061
+   Size: 28
+   CRC: 2200002
+   00040061 | E3 40 40 07 F1 F6 C2 A1 20 00 02 20 00 02 20 00 02 20 00 02 | .@@.................
+   00040081 | 20 00 02 20 00 02 20 00 | ........
+   ------- End -------
 
-   ---- Chunk #10002 ----
-   Offset: 185
-   Size: 2
-   CRC: 20800002
-   00000185 | 02 08 | ..
-   ------ End ------
+   ---- Chunk #40002 ----
+   Offset: 40101
+   Size: 17
+   CRC: 4f13b5a6
+   00040101 | 11 B1 EC B9 11 A1 9E 89 AC 4A 58 4B D6 32 DB C7 D8 | .........JXK.2...
+   ------- End -------
    ```
 
-1. Encrypt an inject data in an image: 
+1. Encrypt and inject data in an image:
+
+   > [!NOTE]
+   Stegano automatically identifies the location of the `IEND` marker in a PNG image and injects the payload at a position 8 bytes before the IEND marker by default. This is done to prevent any corruption of the original image.
 
    ```bash
-   $ stegano encrypt -i input_image_file_name -k 'pass' -p 'hello' -f 159028 -o output_image_file_name -s
-   Image encoded and written successfully!
+   $ stegano encrypt -i input_image_file_name -k 'pass' -p 'hello' -o output_image_file_name
+   It is a valid PNG file. Let's process it! 
+
+   ---- Header ----
+   00000000 | 89 50 4E 47 0D 0A 1A 0A | .PNG....
+   ----- End ------
+
+   ------- Chunk -------
+   Offset: 159028
+   Size: 48
+   CRC: 13a29bcc
+   00159028 | 03 AE 73 9D 60 28 1A F1 20 A0 EB 10 39 11 28 9D FC 85 5E DB | ..s.`(......9.(...^.
+   00159048 | D2 D3 7A 45 B1 71 EE 4F 4C 66 0C E8 FC 85 5E DB D2 D3 7A 45 | ..zE.q.OLf....^...zE
+   00159068 | B1 71 EE 4F 4C 66 0C E8 | .q.OLf..
+   -------- End --------
+
+   Your payload has been encrypted and written at offset 159028 successfully!
    ```
 
-1. Decrypt, extract secret from an image and remove the secret from the image: 
+   > [!NOTE]
+   By default, the maximum key length is restricted to 16 characters.
+
+1. Using the previously obtained offset, you can decrypt and extract the secret information from an image, as well as remove the secret content from the image:
 
    ```bash
    $ stegano decrypt -i input_image_file_name -k 'pass' -f 159028 -o output_image_file_name -s
-   Your decoded secret is: "hello"
+   Your decrypted secret is: "hello"
    ```
 
 1. if wrong key is provided: 
 
    ```bash
    $ stegano decrypt -i input_image_file_name -k 'invalid' -f 159028 -o output_image_file_name
-   Your decoded secret is: "qji~s"
+   Your decrypted secret is: "qji~s"
    ```
 
 1. if wrong key and wrong offset are provided: 
@@ -311,11 +339,11 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
    Offset: 159021
    Size: 36
    CRC: 1348f762
-   00159021 | 69 6E 76 61 74 6D 7B 76 71 1B 4D C0 1F 8D 24 7F 7C 61 FC 97 | invatm{vq.M...$.|a..
-   00159041 | 19 9A B0 0D 99 41 D5 E5 BD 20 C0 79 B2 4A 7B C5 | .....A.....y.J{.
+   00159024 | F1 B0 E8 48 9E AD 1E 56 A5 82 7C 3B 14 D4 8C 1D E7 1A 90 47 | ...H...V..|;.......G
+   00159044 | A0 1D D2 90 04 71 2F 01 AA 91 86 6D | .....q/....m
    -------- End --------
 
-   Your decoded secret is: "invatm{vq\u{1b}M�\u{1f}�$\u{7f}|a��\u{19}��\r�A�� �y�J{�"
+   Your decrypted secret is: "��H��\u{1e}V��|;\u{14}Ԍ\u{1d}�\u{1a}�G�\u{1d}Ґ\u{4}q/\u{1}���m"
    ```
 
 1. if correct key and wrong offset are provided: 
@@ -331,12 +359,12 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
    ------- Chunk -------
    Offset: 159021
    Size: 36
-   CRC: 1348f762
-   00159021 | 70 61 73 73 68 65 6C 6C 6F 0C 5F DF 06 88 3E 62 7A 61 E3 8D | passhello._...>bza..
-   00159041 | 0D 92 AD 08 88 4C CF F2 A4 2F C5 6B AE 42 6C DF | .....L.../.k.Bl.
+   CRC: fc855edb
+   00159024 | 67 47 07 E6 DC 5D 27 34 CB 51 A4 63 66 C1 C5 F4 5A A2 6B 5C | gG...]'4.Q.cf...Z.k\
+   00159044 | 28 24 BF 53 BC 21 59 04 1B F6 FC 21 | ($.S.!Y....!
    -------- End --------
 
-   Your decoded secret is: "invatm{vq\u{1b}M�\u{1f}�$\u{7f}|a��\u{19}��\r�A�� �y�J{�"
+   Your decrypted secret is: "gG\u{7}��]'4�Q�cf���Z�k\\($�S�!Y\u{4}\u{1b}��!"
    ```
 
 > [!NOTE]
@@ -352,7 +380,7 @@ By default, Stegano uses the AES-128 encryption algorithm. The maximum key lengt
 | `-o` or `--output`      | Sets the output file for the encrypted payload (default is "output.png").|
 | `-k` or `--key`         | Sets the key for payload encryption (default is "key").    |
 | `-s` or `--suppress`    | Suppresses output messages.                                |
-| `-f` or `--offset`      | Sets the offset (default is 10).                           |
+| `-f` or `--offset`      | Sets the offset (default is 9999999999 for auto injection: IEND - 8 bytes).  |
 | `-p` or `--payload`     | Sets the payload (default is "hello").                     |
 | `-t` or `--type`        | Sets the type (default is "PNG").                          |
 |                         |                                                           |
@@ -362,7 +390,7 @@ By default, Stegano uses the AES-128 encryption algorithm. The maximum key lengt
 | `-o` or `--output`      | Sets the output file for the decrypted payload (default is "output.png").|
 | `-k` or `--key`         | Sets the key for payload decryption (default is "key").    |
 | `-s` or `--suppress`    | Suppresses output messages.                                |
-| `-f` or `--offset`      | Sets the offset (default is 10).                           |
+| `-f` or `--offset`      | Sets the offset (default is 9999999999) for auto decryption: IEND - 8 bytes).  |
 | `-p` or `--payload`     | Sets the payload (default is "hello").                     |
 | `-t` or `--type`        | Sets the type (default is "PNG").                          |
 |                         |                                                           |
@@ -372,6 +400,7 @@ By default, Stegano uses the AES-128 encryption algorithm. The maximum key lengt
 | `-s` or `--start`       | Sets the index of the start chunk to read from (default 0). |
 | `-e` or `--end`         | Sets the index of the end chunk to stop reading at (default 100).|
 | `-r` or `--suppress`    | Suppresses output messages.                                |
+| `-z` or `--read-end`    | Read from start or end of file (default is reading from the start of image). |
 
 ## 🤝 Contributing
 

@@ -5,7 +5,7 @@ use std::io::Write;
 use stegano::cli::{Cli, SteganoCommands};
 use stegano::jpeg::utils::read_jpeg_headers;
 use stegano::models::MetaChunk;
-use stegano::utils::{encrypt_payload, print_hex, xor_encrypt_decrypt};
+use stegano::utils::{encrypt_payload, xor_encrypt_decrypt};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
@@ -38,23 +38,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Update the MetaChunk with the encrypted data and CRC
                 meta_chunk.chk.data = encrypted_data.clone();
                 meta_chunk.chk.crc = crc;
-                if !encrypt_cmd.suppress {
-                    println!("\x1b[92m------- Chunk -------\x1b[0m");
-                    println!("Offset: {:?}", encrypt_cmd.offset);
-                    println!("Size: {:?}", encrypted_data.len());
-                    println!("CRC: {:x}", meta_chunk.chk.crc);
-                    print_hex(&encrypted_data, encrypt_cmd.offset.try_into().unwrap());
-                    print!("\x1b[0m");
-                    println!("\x1b[92m-------- End --------\x1b[0m");
-                    println!();
-                }
 
                 // Create a new mutable reference to file_reader
                 let mut file_reader = &file;
 
                 meta_chunk.write_encrypted_data(&mut file_reader, &encrypt_cmd, &mut file_writer);
-
-                println!("Image encrypted and written successfully!");
             }
             SteganoCommands::Decrypt(decrypt_cmd) => {
                 let mut file = File::open(decrypt_cmd.input.clone())?;
