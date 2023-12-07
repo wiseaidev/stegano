@@ -107,7 +107,7 @@ impl MetaChunk {
     /// # Returns
     ///
     /// A Result containing the initialized MetaChunk if successful, or an Error if any
-    /// errors occur during the process.
+    /// _errors occur during the process.
     ///
     /// # Panics
     ///
@@ -118,8 +118,8 @@ impl MetaChunk {
         let b_arr = u64_to_u8_array(header.header);
         let offset = file.stream_position()?;
         if &b_arr[1..4] != b"PNG" {
-            let err = Error::new(ErrorKind::Other, "Not a valid PNG file!");
-            return Err(err);
+            let _err = Error::new(ErrorKind::Other, "Not a valid PNG file!");
+            return Err(_err);
         } else if !suppress {
             println!("It is a valid PNG file. Let's process it! \n");
             // print header
@@ -151,25 +151,41 @@ impl MetaChunk {
     /// - `file` - A mutable reference to a File representing the PNG image file.
     /// - `c`: A reference to `ShowMetaCmd` containing command-line arguments.
     pub fn process_image(&mut self, file: &mut File, c: &ShowMetaCmd) {
+        let mut start_position: usize = c.start_chunk;
+        let mut end_position: usize = c.end_chunk;
         let mut _chunk_type = String::new();
         let end_chunk_type = "IEND";
-        for (i, j) in (c.start_chunk..c.end_chunk).enumerate() {
-            let offset = self.get_offset(file);
+        if c.read_end {
+            file.seek(SeekFrom::End(
+                (-(start_position as isize)).try_into().unwrap(),
+            ))
+            .unwrap();
+            start_position = file.metadata().unwrap().len() as usize - c.nb_chunks;
+            end_position = file.metadata().unwrap().len() as usize - 1;
+        } else {
+            file.seek(SeekFrom::Start((start_position).try_into().unwrap()))
+                .unwrap();
+            if c.start_chunk > 8 {
+                self.offset = start_position as u64;
+            }
+        }
+        for (i, j) in (start_position..end_position).enumerate() {
+            _chunk_type = self.chunk_type_to_string();
+            if i >= c.nb_chunks || _chunk_type == end_chunk_type {
+                break;
+            }
             self.read_chunk(file);
             if !c.suppress {
                 println!("\x1b[92m---- Chunk #{} ----\x1b[0m", j);
-                println!("Offset: {:?}", offset);
+                println!("Offset: {:?}", self.offset);
                 println!("Size: {:?}", self.chk.size);
                 println!("CRC: {:x}", self.chk.crc);
-                print_hex(&self.chk.data, offset);
+                print_hex(&self.chk.data, self.offset);
                 print!("\x1b[0m");
-                println!("\x1b[92m------ End ------\x1b[0m");
+                println!("\x1b[92m------- End -------\x1b[0m");
                 println!();
             }
-            _chunk_type = self.chunk_type_to_string();
-            if i + 1 >= c.nb_chunks || _chunk_type == end_chunk_type {
-                break;
-            }
+            let _offset = self.get_offset(file);
         }
     }
 
@@ -186,7 +202,7 @@ impl MetaChunk {
     ///
     /// The offset obtained from the current position in the file.
     fn get_offset<T: Read + Seek>(&mut self, file: &mut T) -> u64 {
-        let offset = file.seek(SeekFrom::Current(5)).unwrap();
+        let offset = file.stream_position().unwrap();
         self.offset = offset;
         offset
     }
@@ -221,7 +237,7 @@ impl MetaChunk {
             Ok(_) => {
                 // Successfully read the expected number of bytes
                 self.chk.size = u32::from_be_bytes(size_bytes);
-                if self.chk.size > 100 {
+                if self.chk.size > 40 {
                     let min_non_zero_number = *size_bytes
                         .iter()
                         .filter(|&&byte| byte != 0)
@@ -231,12 +247,12 @@ impl MetaChunk {
                 }
                 // self.chk.size = size_bytes[3] as u32;
             }
-            Err(err) if err.kind() == ErrorKind::UnexpectedEof => {
+            Err(_err) if _err.kind() == ErrorKind::UnexpectedEof => {
                 // Handle the situation where the file ends before reading the expected bytes
-                eprintln!("Warning: Reached end of file prematurely while reading chunk size");
+                // eprintln!("Warning: Reached end of file prematurely while reading chunk size");
             }
-            Err(err) => {
-                eprintln!("Error reading chunk size bytes: {}", err);
+            Err(_err) => {
+                // eprintln!("Error reading chunk size bytes: {}", _err);
             }
         }
     }
@@ -257,12 +273,12 @@ impl MetaChunk {
                 // Successfully read the expected number of bytes
                 self.chk.r#type = u32::from_be_bytes(type_bytes);
             }
-            Err(err) if err.kind() == ErrorKind::UnexpectedEof => {
+            Err(_err) if _err.kind() == ErrorKind::UnexpectedEof => {
                 // Handle the situation where the file ends before reading the expected bytes
-                eprintln!("Warning: Reached end of file prematurely while reading chunk type");
+                // eprintln!("Warning: Reached end of file prematurely while reading chunk type");
             }
-            Err(err) => {
-                eprintln!("Error reading chunk type bytes: {}", err);
+            Err(_err) => {
+                // eprintln!("Error reading chunk type bytes: {}", _err);
             }
         }
     }
@@ -284,15 +300,15 @@ impl MetaChunk {
             Ok(_) => {
                 // Successfully read the expected number of bytes
             }
-            Err(err) if err.kind() == ErrorKind::UnexpectedEof => {
-                eprintln!("Error reading chunk bytes: Reached end of file prematurely");
+            Err(_err) if _err.kind() == ErrorKind::UnexpectedEof => {
+                // eprintln!("Error reading chunk bytes: Reached end of file prematurely");
                 // Update the length of the Chunk based on the actual number of bytes read
                 self.chk
                     .data
                     .truncate(file.stream_position().unwrap() as usize);
             }
-            Err(err) => {
-                eprintln!("Error reading chunk bytes: {}", err);
+            Err(_err) => {
+                // eprintln!("Error reading chunk bytes: {}", _err);
             }
         }
     }
@@ -313,12 +329,12 @@ impl MetaChunk {
                 // Successfully read the expected number of bytes
                 self.chk.crc = u32::from_be_bytes(crc_bytes);
             }
-            Err(err) if err.kind() == ErrorKind::UnexpectedEof => {
+            Err(_err) if _err.kind() == ErrorKind::UnexpectedEof => {
                 // Handle the situation where the file ends before reading the expected bytes
-                eprintln!("Warning: Reached end of file prematurely while reading CRC");
+                // eprintln!("Warning: Reached end of file prematurely while reading CRC");
             }
-            Err(err) => {
-                eprintln!("Error reading CRC bytes: {}", err);
+            Err(_err) => {
+                // eprintln!("Error reading CRC bytes: {}", _err);
             }
         }
     }
@@ -372,18 +388,44 @@ impl MetaChunk {
     ) {
         let b_arr = u64_to_u8_array(self.header.header);
         w.write_all(&b_arr).unwrap();
-        let offset = &c.offset;
-        let mut buff = vec![0; offset - 8];
+        let mut offset = c.offset;
 
-        // Encoding specific operations
-        buff.resize(offset - 8, 0);
+        let encrypted_data = self.chk.data.clone();
+        let encrypted_data_len = self.chk.data.len();
+        let encrypted_data_crc = self.chk.crc;
+        let init_position = r.stream_position().unwrap();
+        if offset == 9999999999 {
+            // Auto inject at IEND - 11
+            // Read untill IEND
+            offset = self.find_iend_offset(r);
+            r.seek(SeekFrom::Start(init_position)).unwrap();
+        }
+
+        self.chk.data = encrypted_data.clone();
+        self.chk.size = encrypted_data_len as u32;
+        self.chk.crc = encrypted_data_crc;
+
+        if !c.suppress {
+            println!("\x1b[92m------- Chunk -------\x1b[0m");
+            println!("Offset: {:?}", offset);
+            println!("Size: {:?}", encrypted_data_len);
+            println!("CRC: {:x}", encrypted_data_crc);
+            print_hex(&encrypted_data, offset.try_into().unwrap());
+            print!("\x1b[0m");
+            println!("\x1b[92m-------- End --------\x1b[0m");
+            println!();
+        }
+        let mut buff = vec![0; offset - 8];
+        buff.resize(&offset - 8, 0);
         r.read_exact(&mut buff).unwrap();
         w.write_all(&buff).unwrap();
         let data: Vec<u8> = self.marshal_data();
         w.write_all(&data).unwrap();
-        // Uncomment the following line to preserve the length of the image after manipulation
-        // r.seek(SeekFrom::Current(data.len().try_into().unwrap())).expect("Error seeking to offset");
         copy(r, &mut w).unwrap();
+        println!(
+            "Your payload has been encrypted and written at offset {} successfully!",
+            offset
+        );
     }
 
     /// Writes data to a specified writer by decryption.
@@ -406,13 +448,19 @@ impl MetaChunk {
     ) {
         let b_arr = u64_to_u8_array(self.header.header);
         w.write_all(&b_arr).unwrap();
-        let offset = &c.offset;
+        let mut offset = c.offset;
+        let init_position = r.stream_position().unwrap();
+        if offset == 9999999999 {
+            // Read untill IEND
+            offset = self.find_iend_offset(r);
+            r.seek(SeekFrom::Start(init_position)).unwrap();
+        }
         let mut buff = vec![0; offset - 8];
 
         buff.resize(offset - 16, 0);
         r.read_exact(&mut buff).unwrap();
         w.write_all(&buff).unwrap();
-        let offset = self.get_offset(r);
+        self.offset = r.seek(SeekFrom::Current(5)).unwrap();
         self.read_chunk(r);
         let mut decrypted_data: Vec<u8> = vec![0];
         match (*c.algorithm.to_lowercase()).into() {
@@ -429,10 +477,10 @@ impl MetaChunk {
         let unpadded_string = decoded_string.trim_end_matches('\0');
         if !c.suppress {
             println!("\x1b[92m------- Chunk -------\x1b[0m");
-            println!("Offset: {:?}", c.offset);
+            println!("Offset: {:?}", self.offset);
             println!("Size: {:?}", self.chk.size);
             println!("CRC: {:x}", self.chk.crc);
-            print_hex(&decrypted_data, offset);
+            print_hex(&decrypted_data, offset.try_into().unwrap());
             print!("\x1b[0m");
             println!("\x1b[92m-------- End --------\x1b[0m");
             println!();
@@ -440,9 +488,72 @@ impl MetaChunk {
         r.seek(SeekFrom::Current(self.chk.data.len().try_into().unwrap()))
             .expect("Error seeking to offset");
         println!(
-            "\x1b[38;5;7mYour decoded secret is:\x1b[0m \x1b[38;5;214m{:?}\x1b[0m",
+            "\x1b[38;5;7mYour decrypted secret is:\x1b[0m \x1b[38;5;214m{:?}\x1b[0m",
             unpadded_string
         );
         copy(r, &mut w).unwrap();
+    }
+
+    /// Finds the length of a file given a Read + Seek object.
+    ///
+    /// This function takes a readable and seekable input implementing both the `Read` and `Seek` traits.
+    /// It saves the current position, moves the cursor to the end of the file to determine its length,
+    /// and then restores the cursor to the saved position. The function returns the length of the file.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: A mutable reference to the instance of the struct containing this method.
+    /// - `file`: A mutable reference to a readable and seekable input.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the length of the file if successful, or an `std::io::Error` if an error occurs.
+    pub fn find_file_length<T>(&mut self, file: &mut T) -> std::io::Result<u64>
+    where
+        T: Read + Seek,
+    {
+        // Save the current position
+        let current_position = file.stream_position()?;
+
+        // Move the cursor to the end of the file
+        let file_length = file.seek(SeekFrom::End(0))?;
+
+        // Move the cursor back to the saved position
+        file.seek(SeekFrom::Start(current_position))?;
+
+        Ok(file_length)
+    }
+
+    /// Finds the offset of the last occurrence of the "IEND" chunk.
+    ///
+    /// This function takes a readable and seekable input implementing both the `Read` and `Seek` traits.
+    /// It iterates through the chunks in the file until it reaches the "IEND" chunk, capturing the offset
+    /// of the last occurrence. The offset is then adjusted for the chunk size, returning the final offset.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: A mutable reference to the instance of the struct containing this method.
+    /// - `r`: A mutable reference to a readable and seekable input.
+    ///
+    /// # Returns
+    ///
+    /// Returns the offset of the last occurrence of the "IEND" chunk.
+    fn find_iend_offset<R>(&mut self, r: &mut R) -> usize
+    where
+        R: Seek + Read,
+    {
+        let mut iend_offset = 999;
+        let end_chunk_type = "IEND";
+
+        while iend_offset < self.find_file_length(r).unwrap() {
+            iend_offset = self.get_offset(r);
+            self.read_chunk(r);
+            let chunk_type = self.chunk_type_to_string();
+            if chunk_type == end_chunk_type {
+                break;
+            }
+        }
+
+        (iend_offset - 11) as usize
     }
 }

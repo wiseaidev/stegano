@@ -58,7 +58,7 @@ pub struct EncryptCmd {
     pub suppress: bool,
 
     /// Sets the offset.
-    #[arg(short = 'f', long = "offset", default_value_t = 10)]
+    #[arg(short = 'f', long = "offset", default_value_t = 9999999999)]
     pub offset: usize,
 
     /// Sets the payload.
@@ -94,7 +94,7 @@ pub struct DecryptCmd {
     pub suppress: bool,
 
     /// Sets the offset.
-    #[arg(short = 'f', long = "offset", default_value_t = 10)]
+    #[arg(short = 'f', long = "offset", default_value_t = 9999999999)]
     pub offset: usize,
 
     /// Sets the payload.
@@ -136,4 +136,8 @@ pub struct ShowMetaCmd {
     /// Sets the type.
     #[arg(short = 't', long = "type", default_value_t = String::from("PNG"))]
     pub r#type: String,
+
+    /// Read from start or end of file.
+    #[arg(short = 'z', long = "read-end", default_value_t = false)]
+    pub read_end: bool,
 }
