@@ -339,7 +339,7 @@ Use these subcommands to process and manipulate png and jpeg images. Here are so
    Your decoded secret is: "invatm{vq\u{1b}M�\u{1f}�$\u{7f}|a��\u{19}��\r�A�� �y�J{�"
    ```
 
-> **Note**<br>
+> [!NOTE]
 By default, Stegano uses the AES-128 encryption algorithm. The maximum key length supported is 16 characters. If you provide a longer key, it will be automatically padded or truncated to fit the required length.
 
 ## 🎨 Options
